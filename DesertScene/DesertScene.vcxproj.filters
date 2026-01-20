@@ -46,6 +46,9 @@
     <Filter Include="models\snake">
       <UniqueIdentifier>{4a10e828-5f52-44ae-8ff9-757b357f319c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="models\tumbleweed">
+      <UniqueIdentifier>{e6ad6198-7872-4804-aca0-f0d9cd8ffad8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main (3).cpp">
@@ -182,6 +185,12 @@
     <None Include="shaders\depthMap.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="models\tumbleweed\tumbleweed.mtl">
+      <Filter>models\tumbleweed</Filter>
+    </None>
+    <None Include="models\tumbleweed\tumbleweed.obj">
+      <Filter>models\tumbleweed</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\textures\FarmhouseTexture.jpg">
@@ -231,6 +240,9 @@
     </Image>
     <Image Include="models\plants\gltf_embedded_12.png">
       <Filter>models\plants</Filter>
+    </Image>
+    <Image Include="models\tumbleweed\bark.png">
+      <Filter>models\tumbleweed</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>

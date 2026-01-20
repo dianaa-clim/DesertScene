@@ -35,6 +35,8 @@ gps::Model3D camelModel;
 gps::Model3D snakeModel;
 gps::Model3D dryPlantModel;
 gps::Model3D tree2Model;
+gps::Model3D tumbleweedModel;
+
 
 gps::Shader myShader;
 gps::Shader torchShader;
@@ -55,9 +57,6 @@ float pitch = 0.0f;
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
 
 bool gVerbose = false;
 
@@ -128,8 +127,17 @@ float dryPlantScale = 1.5f;
 float dryPlantSink = 0.0f;
 
 glm::vec3 tree2Pos(-65.5f, 0.0f, -65.5f);
-float tree2Scale = 4.0f;
+float tree2Scale = 4.5f;
 float tree2Sink = 0.0f;
+
+glm::vec3 tumbleweedPos = glm::vec3(-10.5f, 0.0f, -5.1f);
+float tumbleweedSpeed = 2.0f;     // unitati pe secunda
+float tumbleweedScale = 0.15f;     // ajustezi dupa model
+float tumbleweedAngle = 0.0f;     // optional rotatie
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+
 
 // zone plate unde vrei sa pui obiecte
 std::vector<FlattenZone> flattenZones = {
@@ -265,6 +273,29 @@ void processInput(GLFWwindow* window)
     }
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_RELEASE)
         key4Pressed = false;
+    float twMove = tumbleweedSpeed * deltaTime;
+
+// SAGETI = TUMBLEWEED
+if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    tumbleweedPos.z -= twMove;
+
+if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    tumbleweedPos.z += twMove;
+
+if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    tumbleweedPos.x -= twMove;
+
+if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    tumbleweedPos.x += twMove;
+
+// rotatie cand se misca
+if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
+    glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
+    glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
+    glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+{
+    tumbleweedAngle += 180.0f * deltaTime;
+}
 
 }
 
@@ -610,6 +641,64 @@ void updateCamelAnimation(float deltaTime)
         camelDir = 1;
     }
 }
+
+void renderTumbleweed()
+{
+    myShader.useShaderProgram();
+    GLuint p = myShader.shaderProgram;
+
+    // === SHADOW MAP ===
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
+    // === LIGHTING ===
+    glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
+    glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
+    glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
+    glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
+
+    // === MATERIAL (simplu) ===
+    glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
+    glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
+    glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
+
+    // === FOG ===
+    glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
+    glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
+
+    // === TEXTURE ===
+    glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
+
+    // === MATRICES ===
+    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    glm::mat4 projection = glm::perspective(
+        glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT,
+        0.1f,
+        1000.0f
+    );
+
+    float y = getHeight(tumbleweedPos.x, tumbleweedPos.z);
+
+    glm::mat4 model(1.0f);
+    model = glm::translate(model, glm::vec3(tumbleweedPos.x, y, tumbleweedPos.z));
+    model = glm::rotate(model, glm::radians(tumbleweedAngle), glm::vec3(0, 1, 0));
+    model = glm::scale(model, glm::vec3(tumbleweedScale));
+
+    glUniformMatrix4fv(glGetUniformLocation(p, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(p, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    tumbleweedModel.Draw(myShader);
+}
+
 
 void renderTree2()
 {
@@ -1515,6 +1604,21 @@ void renderDepthPass(gps::Shader& shader)
     );
     tree2Model.Draw(shader);
 
+    // ================= TUMBLEWEED =================
+    y = getHeight(tumbleweedPos.x, tumbleweedPos.z);
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(tumbleweedPos.x, y, tumbleweedPos.z));
+    model = glm::rotate(model, glm::radians(tumbleweedAngle), glm::vec3(0, 1, 0));
+    model = glm::scale(model, glm::vec3(tumbleweedScale));
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    tumbleweedModel.Draw(shader);
+
+
 }
 
 
@@ -1555,9 +1659,6 @@ void renderScene(GLFWwindow* window)
         glUseProgram(duneShader);
         uploadTorchUniforms(duneShader);
     }
-
-    deltaTime = now - lastFrame;
-    lastFrame = now;
 
     processInput(window);
     float groundY = getHeight(cameraPos.x, cameraPos.z);
@@ -1611,6 +1712,7 @@ void renderScene(GLFWwindow* window)
     renderSnake();
     renderDryPlant();
     renderTree2();
+    renderTumbleweed();
 }
 
 // ===================== MAIN =====================
@@ -1669,6 +1771,8 @@ int main()
     snakeModel.LoadModel("models/snake/snake.obj", "models/snake/");
     dryPlantModel.LoadModel("models/plants/dryplant1.obj", "models/plants/");
     tree2Model.LoadModel("models/sahara_tree/saharatree2.obj", "models/sahara_tree/");
+    tumbleweedModel.LoadModel("models/tumbleweed/tumbleweed.obj");
+
 
     // dacă frunzele au alpha (PNG), activează blending (opțional dar util)
     glEnable(GL_BLEND);
@@ -1684,11 +1788,22 @@ int main()
     );
     while (!glfwWindowShouldClose(window))
     {
+        // === deltaTime (O SINGURA DATA) ===
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        // === input / movement ===
+        processInput(window);
+
+        // === render ===
         renderScene(window);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+ 
     glfwTerminate();
     return 0;
 }

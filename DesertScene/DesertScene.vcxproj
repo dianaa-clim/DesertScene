@@ -156,6 +156,7 @@
     <None Include="models\sahara_tree\sahara_tree.mtl" />
     <None Include="models\snake\snake.mtl" />
     <None Include="models\torch\torch.mtl" />
+    <None Include="models\tumbleweed\tumbleweed.mtl" />
     <None Include="shaders\depthMap.frag" />
     <None Include="shaders\depthMap.vert" />
     <None Include="shaders\shaderDepth.frag" />
@@ -185,6 +186,7 @@
     <Image Include="models\sahara_tree\SaharaDesertTrees_fixed.png" />
     <Image Include="models\snake\Material_1_baseColor.png" />
     <Image Include="models\torch\lambert1_Base_Color.png" />
+    <Image Include="models\tumbleweed\bark.png" />
     <Image Include="textures\sand.jpg" />
   </ItemGroup>
   <ItemGroup>
@@ -261,6 +263,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="models\sahara_tree\saharatree2.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="models\tumbleweed\tumbleweed.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
