@@ -1,4 +1,5 @@
 ﻿#version 330 core
+
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoord;
@@ -31,30 +32,44 @@ uniform float uTorchIntensity[MAX_TORCH];
 uniform float uEmissive;
 uniform vec3  uEmissiveColor;
 
-float computeShadow(vec3 N)
+float computeShadow(vec4 fragPosLightSpace, vec3 normal)
 {
-    vec3 proj = FragPosLightSpace.xyz / FragPosLightSpace.w;
-    proj = proj * 0.5 + 0.5;
-    if (proj.z > 1.0) return 0.0;
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
 
-    vec3 Ln = normalize(-lightDir);
-    float bias = max(0.006 * (1.0 - dot(normalize(N), Ln)), 0.0015);
+    if (projCoords.z > 1.0)
+        return 0.0;
+
+    // clamp corect
+    float ndotl = clamp(dot(normalize(normal), normalize(-lightDir)), 0.0, 1.0);
+
+    // bias STABIL (foarte important)
+    float bias = mix(0.0025, 0.0008, ndotl);
 
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 
-    for (int x = -1; x <= 1; x++)
-    for (int y = -1; y <= 1; y++)
+    for (int x = -1; x <= 1; ++x)
     {
-        float pcfDepth = texture(shadowMap,
-            proj.xy + vec2(x, y) * texelSize).r;
+        for (int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(
+                shadowMap,
+                projCoords.xy + vec2(x, y) * texelSize
+            ).r;
 
-        shadow += (proj.z - bias > pcfDepth) ? 1.0 : 0.0;
+            shadow += (projCoords.z - bias > pcfDepth) ? 1.0 : 0.0;
+        }
     }
 
     shadow /= 9.0;
+
+    // intensitate umbră (opțional, dar recomandat)
+    shadow *= 0.4;
+
     return shadow;
 }
+
 
 
 void main()
@@ -64,31 +79,23 @@ void main()
 
     vec3 N = normalize(Normal);
     vec3 V = normalize(viewPos - FragPos);
-
     vec3 L = normalize(-lightDir);
+
     float diff = max(dot(N, L), 0.0);
 
     vec3 H = normalize(L + V);
     float spec = pow(max(dot(N, H), 0.0), shininess);
 
-    float hemi = clamp(N.y * 0.5 + 0.5, 0.0, 1.0);
-    vec3 skyAmb    = vec3(0.22, 0.28, 0.38) * 0.7;
-    vec3 groundAmb = vec3(0.30, 0.22, 0.16) * 0.6;
-    vec3 hemiAmb   = mix(groundAmb, skyAmb, hemi);
-
-    vec3 ambient  = ambientColor + hemiAmb;
+    vec3 ambient  = ambientColor;
     vec3 diffuse  = diff * lightColor;
     vec3 specular = specStrength * spec * lightColor;
 
+    float shadow = computeShadow(FragPosLightSpace, N);
+    vec3 color = ambient + (1.0 - shadow) * (diffuse + specular);
+
     vec3 baseColor = tex.rgb * materialTint;
+    color *= baseColor;
 
-    float shadow = computeShadow(N);
-
-    vec3 color =
-        (ambient + (1.0 - shadow) * diffuse) * baseColor +
-        (1.0 - shadow) * specular;
-
-    // TORȚE
     for (int i = 0; i < uTorchCount && i < MAX_TORCH; i++)
     {
         vec3 toL = uTorchPos[i] - FragPos;
@@ -114,6 +121,5 @@ void main()
     float fogFactor = exp(-dCam * fogDensity);
     fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-    color = mix(fogColor, color, fogFactor);
-    FragColor = vec4(color, tex.a);
+    FragColor = vec4(mix(fogColor, color, fogFactor), tex.a);
 }

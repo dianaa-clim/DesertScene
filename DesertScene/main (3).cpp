@@ -138,9 +138,10 @@ std::vector<FlattenZone> flattenZones = {
     { cactusPos.x, cactusPos.z, 3.0f,        1.0f },
     { cactus2Pos.x, cactus2Pos.z, 3.0f, 1.0f }, // cactus
     { -45.0f, -110.0f, 14.0f, 1.0f },               // architecture
-    {camelPos.x, camelPos.y, 3.0f, 1.0f},
-    {snakePos.x, snakePos.y, 3.0f, 1.0f},
-    {dryPlantPos.x, dryPlantPos.y, 3.0f, 1.0f},
+    {camelPos.x, camelPos.z, 3.0f, 1.0f},
+    {snakePos.x, snakePos.z, 3.0f, 1.0f},
+    {dryPlantPos.x, dryPlantPos.z, 3.0f, 1.0f},
+
 };
 
 
@@ -175,7 +176,16 @@ enum RenderMode {
 RenderMode gRenderMode = RENDER_SOLID;
 bool gSmoothEnabled = true;
 
+// ===================== SHADOW MAP =====================
+const unsigned int SHADOW_WIDTH = 2048;
+const unsigned int SHADOW_HEIGHT = 2048;
 
+GLuint shadowMapFBO;
+GLuint depthMapTexture;
+
+gps::Shader depthMapShader;
+
+float ruinsBaseY = -0.4f;  
 // ===================== MOUSE =====================
 void mouse_callback(GLFWwindow*, double xpos, double ypos)
 {
@@ -380,6 +390,79 @@ void initDuneBuffers()
     glBindVertexArray(0);
 }
 
+void initShadowMap()
+{
+    glGenFramebuffers(1, &shadowMapFBO);
+
+    glGenTextures(1, &depthMapTexture);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+        SHADOW_WIDTH, SHADOW_HEIGHT,
+        0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D,
+        depthMapTexture,
+        0
+    );
+
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+glm::mat4 computeRuinsModelMatrix(float yOffset = 0.0f)
+{
+    float y = getHeight(ruinsPos.x, ruinsPos.z) - ruinsSink + yOffset;
+    glm::mat4 M(1.0f);
+    M = glm::translate(M, glm::vec3(ruinsPos.x, y, ruinsPos.z));
+    M = glm::rotate(M, glm::radians(ruinsYawDeg), glm::vec3(0, 1, 0));
+    M = glm::scale(M, glm::vec3(ruinsScale));
+    return M;
+}
+
+
+glm::mat4 computeLightSpaceTrMatrix()
+{
+    // centru aproximativ al scenei tale
+    glm::vec3 sceneCenter(
+        cameraPos.x,
+        0.0f,
+        cameraPos.z
+    );
+
+
+    glm::mat4 lightView = glm::lookAt(
+        sceneCenter - lightDir * 60.0f,
+        sceneCenter,
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+
+    glm::mat4 lightProjection = glm::ortho(
+        -80.0f, 80.0f,
+        -80.0f, 80.0f,
+        0.1f, 200.0f
+    );
+
+    return lightProjection * lightView;
+}
+
+
 
 GLuint loadTexture(const char* path)
 {
@@ -582,6 +665,16 @@ void renderDryPlant()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     // === LIGHTING ===
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -630,6 +723,16 @@ void renderSnake()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     // === LIGHTING ===
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -684,6 +787,16 @@ void renderCamel()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     // === LIGHTING ===
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -752,6 +865,16 @@ void renderFirstPlant()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     // === LIGHTING ===
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -800,6 +923,16 @@ void renderSecondCactus()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
@@ -844,6 +977,16 @@ void renderCactus()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     // === LIGHTING ===
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -893,7 +1036,11 @@ void renderLeftTorchOnTemple()
 {
     torchShader.useShaderProgram();
 
+
+
     GLuint p = torchShader.shaderProgram;
+    
+
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
@@ -926,6 +1073,8 @@ void renderRightTorchOnTemple()
     torchShader.useShaderProgram();
 
     GLuint p = torchShader.shaderProgram;
+    
+
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
@@ -962,6 +1111,16 @@ void renderArchitecture()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
@@ -1004,6 +1163,17 @@ void renderRuins()
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
@@ -1014,27 +1184,19 @@ void renderRuins()
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.08f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 16.0f);
 
-    // emissive (default OFF)
-    glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
-    glUniform3f(glGetUniformLocation(p, "uEmissiveColor"), 1.0f, 0.5f, 0.2f);
-
     // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // texture unit
-    glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
-
+    // matrices
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
+    glm::mat4 projection = glm::perspective(
+        glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT,
+        0.1f, 1000.0f
+    );
 
-    float y = getHeight(ruinsPos.x, ruinsPos.z) - ruinsSink;
-
-    glm::mat4 model(1.0f);
-    model = glm::translate(model, glm::vec3(ruinsPos.x, y, ruinsPos.z));
-    model = glm::rotate(model, glm::radians(ruinsYawDeg), glm::vec3(0, 1, 0));
-    model = glm::scale(model, glm::vec3(ruinsScale));
+    glm::mat4 model = computeRuinsModelMatrix(0.0f); // ✅ DOAR ASTA
 
     glUniformMatrix4fv(glGetUniformLocation(p, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -1046,12 +1208,23 @@ void renderRuins()
 
 
 
+
 // ===================== SHADER =====================
 
 void renderTree()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
 
     // === LIGHTING ===
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -1103,6 +1276,16 @@ void renderTree()
 void renderDunes()
 {
     glUseProgram(duneShader);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+    glUniform1i(glGetUniformLocation(duneShader, "shadowMap"), 1);
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(duneShader, "lightSpaceTrMatrix"),
+        1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix())
+    );
+
     glUniform3f(glGetUniformLocation(duneShader, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(duneShader, "fogDensity"), 0.006f); // începe cu 0.004..0.008
 
@@ -1190,13 +1373,179 @@ void uploadTorchUniforms(GLuint program)
     if (locInt >= 0) glUniform1fv(locInt, TORCH_COUNT, &gTorchIntensity[0]);
 }
 
+void renderDepthPass(gps::Shader& shader)
+{
+    shader.useShaderProgram();
+
+    glm::mat4 lightSpace = computeLightSpaceTrMatrix();
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(lightSpace)
+    );
+
+    glm::mat4 model;  // ✅ DECLARAT O SINGURĂ DATĂ
+
+    // ================= DUNE =================
+    model = glm::mat4(1.0f);
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    glBindVertexArray(duneVAO);
+    glDrawElements(GL_TRIANGLES, (GLsizei)duneIndices.size(), GL_UNSIGNED_INT, 0);
+
+    // ================= TREE =================
+    model = glm::translate(glm::mat4(1.0f),
+        glm::vec3(treePos.x, getHeight(treePos.x, treePos.z), treePos.z));
+    model = glm::scale(model, glm::vec3(treeScale));
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    treeModel.Draw(shader);
+
+    // ================= RUINS =================
+    model = computeRuinsModelMatrix(0.02f);  // ✅ DOAR ASIGNARE
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    ruinsModel.Draw(shader);
+
+    // ================= SNAKE =================
+    float t = (float)glfwGetTime();
+    float forwardBack = sin(t * 1.0f) * 0.4f;
+    float idleRot = sin(t * 0.7f) * glm::radians(5.0f);
+
+    float y = getHeight(snakePos.x, snakePos.z + forwardBack) - snakeSink;
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(
+        snakePos.x + forwardBack,
+        y,
+        snakePos.z
+    ));
+    model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, idleRot, glm::vec3(0, 0, 1));
+    model = glm::scale(model, glm::vec3(snakeScale));
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    snakeModel.Draw(shader);
+
+    // ================= CACTUS 1 =================
+    model = glm::mat4(1.0f);
+    model = glm::translate(model,
+        glm::vec3(
+            cactusPos.x,
+            getHeight(cactusPos.x, cactusPos.z) - cactusSink + 0.02f,
+            cactusPos.z
+        )
+    );
+    model = glm::scale(model, glm::vec3(cactusScale));
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    cactusModel.Draw(shader);
+
+    // ================= CACTUS 2 =================
+    model = glm::mat4(1.0f);
+    model = glm::translate(model,
+        glm::vec3(
+            cactus2Pos.x,
+            getHeight(cactus2Pos.x, cactus2Pos.z) - cactus2Sink + 0.02f,
+            cactus2Pos.z
+        )
+    );
+    model = glm::scale(model, glm::vec3(cactus2Scale));
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    cactus2Model.Draw(shader);
+
+    // ================= CAMEL =================
+    model = glm::mat4(1.0f);
+    model = glm::translate(model,
+        glm::vec3(
+            camelPos.x,
+            getHeight(camelPos.x, camelPos.z) - camelSink + 0.02f,
+            camelPos.z
+        )
+    );
+    model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
+    model = glm::scale(model, glm::vec3(camelScale));
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    camelModel.Draw(shader);
+
+
+    // ================= ARCHITECTURE (TEMPLE) =================
+    model = computeArchitectureModelMatrix();  // NU mai adaugi translate/scale manual
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    architectureModel.Draw(shader);
+
+    // ================= TREE 2 =================
+    model = glm::mat4(1.0f);
+    model = glm::translate(model,
+        glm::vec3(
+            tree2Pos.x,
+            getHeight(tree2Pos.x, tree2Pos.z) - tree2Sink + 0.02f,
+            tree2Pos.z
+        )
+    );
+    model = glm::scale(model, glm::vec3(tree2Scale));
+
+    glUniformMatrix4fv(
+        glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model)
+    );
+    tree2Model.Draw(shader);
+
+}
+
+
+
 
 // ===================== RENDER =====================
 void renderScene(GLFWwindow* window)
 {
     float now = (float)glfwGetTime();
     updateTorchLights(now);
+    glDisable(GL_CULL_FACE);
 
+
+    // ===================== 1) DEPTH PASS =====================
+    depthMapShader.useShaderProgram();
+
+    glm::mat4 lightSpaceMatrix = computeLightSpaceTrMatrix();
+    glUniformMatrix4fv(
+        glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(lightSpaceMatrix)
+    );
+
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    renderDepthPass(depthMapShader);
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     myShader.useShaderProgram();
     uploadTorchUniforms(myShader.shaderProgram);
 
@@ -1273,6 +1622,12 @@ int main()
 
     glewInit();
     glEnable(GL_DEPTH_TEST);
+    initShadowMap();
+
+    /*depthMapShader.loadShader(
+        "shaders/shaderDepth.vert",
+        "shaders/shaderDepth.frag"
+    );*/
 
 
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -1285,6 +1640,10 @@ int main()
     torchShader.loadShader(
         "shaders/shaderTorch.vert",
         "shaders/shaderTorch.frag"
+    );
+    depthMapShader.loadShader(
+        "shaders/shaderDepth.vert",
+        "shaders/shaderDepth.frag"
     );
 
 
