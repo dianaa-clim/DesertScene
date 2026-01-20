@@ -1,0 +1,11 @@
+.vs/
+*.ipch
+*.VC.db
+*.suo
+*.user
+
+build/
+cmake-build-*/
+out/
+bin/
+obj/

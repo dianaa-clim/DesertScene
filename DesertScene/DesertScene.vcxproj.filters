@@ -1,0 +1,256 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="textures">
+      <UniqueIdentifier>{9b18b033-214d-4f32-9b62-aa00378d0a30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{e2e7c62d-e474-4bdc-ab1c-27b5e24c8f5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects">
+      <UniqueIdentifier>{27f59988-2244-460c-94ba-2343b61da90a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models">
+      <UniqueIdentifier>{06762c4f-46c4-4328-b12e-b8790678a765}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\sahara_tree">
+      <UniqueIdentifier>{74dbed84-d109-4ef9-9836-2a5d13cf4da7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\desert_ruins">
+      <UniqueIdentifier>{8fb4cd67-f66d-4283-ae94-f11d0c683b76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\desert_architecture_building">
+      <UniqueIdentifier>{4ae3bc8a-dc69-4851-b66e-533912555443}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\torch">
+      <UniqueIdentifier>{e0ac85f7-ae6b-4e19-ac6d-8072e92d713c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\plants">
+      <UniqueIdentifier>{b56e7af5-7ad0-4ac7-8c11-dc2fbdcb0c49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\camel">
+      <UniqueIdentifier>{3c42f7fb-3150-4e25-aa5b-9e2c8db172e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="models\snake">
+      <UniqueIdentifier>{4a10e828-5f52-44ae-8ff9-757b357f319c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main (3).cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Model3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\stb_image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\tiny_obj_loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\shaders\shaderStart.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\shaders\shaderStart.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\textures\Farmhouse.mtl">
+      <Filter>textures</Filter>
+    </None>
+    <None Include="models\desert_ruins\desert_ruins.mtl">
+      <Filter>models\desert_ruins</Filter>
+    </None>
+    <None Include="models\desert_architecture_building\desert_architecture.mtl">
+      <Filter>models\desert_architecture_building</Filter>
+    </None>
+    <None Include="models\torch\torch.mtl">
+      <Filter>models\torch</Filter>
+    </None>
+    <None Include="models\sahara_tree\sahara_tree.mtl">
+      <Filter>models\sahara_tree</Filter>
+    </None>
+    <None Include="shaders\shaderDune.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shaderDune.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shaderModel.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shaderModel.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="models\desert_ruins\desert_ruins.obj">
+      <Filter>models\desert_ruins</Filter>
+    </None>
+    <None Include="models\desert_architecture_building\desert_architecture.obj">
+      <Filter>models\desert_architecture_building</Filter>
+    </None>
+    <None Include="models\torch\torch.obj">
+      <Filter>models\torch</Filter>
+    </None>
+    <None Include="models\sahara_tree\sahara_tree.obj">
+      <Filter>models\sahara_tree</Filter>
+    </None>
+    <None Include="shaders\shaderTorch.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shaderTorch.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="models\plants\firstcactus.mtl">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\plants\firstcactus.obj">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\plants\secondcactus.mtl">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\plants\secondcactus.obj">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\plants\plant.mtl">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\plants\plant.obj">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\camel\camel.mtl">
+      <Filter>models\camel</Filter>
+    </None>
+    <None Include="models\camel\camel.obj">
+      <Filter>models\camel</Filter>
+    </None>
+    <None Include="models\snake\snake.mtl">
+      <Filter>models\snake</Filter>
+    </None>
+    <None Include="models\snake\snake.obj">
+      <Filter>models\snake</Filter>
+    </None>
+    <None Include="models\plants\dryplant1.mtl">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="models\plants\dryplant1.obj">
+      <Filter>models\plants</Filter>
+    </None>
+    <None Include="shaders\shaderSand.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shaderSand.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="models\sahara_tree\saharatree2.mtl">
+      <Filter>models\sahara_tree</Filter>
+    </None>
+    <None Include="models\sahara_tree\saharatree2.obj">
+      <Filter>models\sahara_tree</Filter>
+    </None>
+    <None Include="shaders\shaderDepth.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shaderDepth.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\depthMap.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\depthMap.vert">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\textures\FarmhouseTexture.jpg">
+      <Filter>textures</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\textures\FarmhouseTextureBumpMap.jpg">
+      <Filter>textures</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\textures\hazard2.png">
+      <Filter>textures</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\textures\stall_texture.png">
+      <Filter>textures</Filter>
+    </Image>
+    <Image Include="models\desert_ruins\desert_ruins_pieces_lowpoly_lambert1_BaseC.png">
+      <Filter>models\desert_ruins</Filter>
+    </Image>
+    <Image Include="models\desert_architecture_building\desert_ruins_pieces_lowpoly_lambert1_BaseC.png">
+      <Filter>models\desert_architecture_building</Filter>
+    </Image>
+    <Image Include="models\torch\lambert1_Base_Color.png">
+      <Filter>models\torch</Filter>
+    </Image>
+    <Image Include="models\sahara_tree\SaharaDesertTrees.png">
+      <Filter>models\sahara_tree</Filter>
+    </Image>
+    <Image Include="models\sahara_tree\SaharaDesertTrees_fixed.png">
+      <Filter>models\sahara_tree</Filter>
+    </Image>
+    <Image Include="textures\sand.jpg">
+      <Filter>textures</Filter>
+    </Image>
+    <Image Include="models\plants\gltf_embedded_0.png">
+      <Filter>models\plants</Filter>
+    </Image>
+    <Image Include="models\plants\color.jpg">
+      <Filter>models\plants</Filter>
+    </Image>
+    <Image Include="models\camel\Camel_Albedo.png">
+      <Filter>models\camel</Filter>
+    </Image>
+    <Image Include="models\camel\CamelCoat_Color.png">
+      <Filter>models\camel</Filter>
+    </Image>
+    <Image Include="models\snake\Material_1_baseColor.png">
+      <Filter>models\snake</Filter>
+    </Image>
+    <Image Include="models\plants\gltf_embedded_12.png">
+      <Filter>models\plants</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Mesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Model3D.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\Shader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Downloads\Resources lab 6 (4)\Resources lab 6\tiny_obj_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
