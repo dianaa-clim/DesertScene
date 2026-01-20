@@ -1,3 +1,3 @@
 ﻿  main (3).cpp
-C:\Users\climd\Desktop\Personal projects\DesertScene\DesertScene\main (3).cpp(1792,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\climd\Desktop\Personal projects\DesertScene\DesertScene\main (3).cpp(1554,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   DesertScene.vcxproj -> C:\Users\climd\Desktop\Personal projects\DesertScene\x64\Debug\DesertScene.exe

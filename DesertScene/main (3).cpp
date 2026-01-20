@@ -1,5 +1,4 @@
-﻿// ===================== INCLUDES =====================
-#ifdef _WIN32
+﻿#ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
 #endif
@@ -41,13 +40,10 @@ gps::Model3D tumbleweedModel;
 gps::Shader myShader;
 gps::Shader torchShader;
 
-
-
-// ===================== WINDOW =====================
 const unsigned int SCR_WIDTH = 1000;
 const unsigned int SCR_HEIGHT = 800;
 
-// ===================== CAMERA =====================
+//camera
 glm::vec3 cameraPos(0.0f, 1.5f, 5.0f);
 glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
@@ -60,7 +56,7 @@ bool firstMouse = true;
 
 bool gVerbose = false;
 
-// ===================== DUNE DATA =====================
+//dune
 const int GRID_SIZE = 500;
 const float GRID_SCALE = 1.0f;
 
@@ -75,7 +71,6 @@ GLuint sandTexture;
 glm::vec3 lightDir = glm::normalize(glm::vec3(-0.8f, -0.55f, -0.6f));// jos, din lateral
 glm::vec3 lightColor = glm::vec3(1.0f, 0.85f, 0.65f);// portocaliu (sunset)
 glm::vec3 ambientColor = glm::vec3(0.06f, 0.05f, 0.045f); // ambient cald, mai slab
-
 
 constexpr int TORCH_COUNT = 2;
 
@@ -94,16 +89,16 @@ float ruinsRadius = 10.0f;   // raza platformei
 
 glm::vec3 ruinsPos(14.0f, 0.0f, -5.5f);
 float ruinsScale = 1.0f;
-float ruinsSink = 0.65f;   // dacă vrei să le “îngropi” puțin în nisip
-float ruinsYawDeg = 0.0f;  // rotație pe Y (opțional)
+float ruinsSink = 0.65f;   
+float ruinsYawDeg = 0.0f;  // rotatie
 
 glm::vec3 treePos(4.5f, 0.0f, -5.0f);
 float treeScale = 4.5f;
-float treeSink = 0.0f;   // dacă vrei să-l mai bagi în nisip
+float treeSink = 0.0f;  
 
 glm::vec3 cactusPos(8.0f, 0.0f, -10.0f);
 float cactusScale = 3.0f;
-float cactusSink = 0.0f;   // îl bagi puțin în nisip dacă vrei
+float cactusSink = 0.0f;   
 
 glm::vec3 cactus2Pos(15.0f, 0.0f, -1.0f);
 float cactus2Scale = 3.0f;
@@ -130,14 +125,16 @@ glm::vec3 tree2Pos(-65.5f, 0.0f, -65.5f);
 float tree2Scale = 4.5f;
 float tree2Sink = 0.0f;
 
+glm::vec3 archPos(-45.0f, 0.0f, -110.0f);
+float archScale = 1.0f;
+float archSink = 0.85f;
+
 glm::vec3 tumbleweedPos = glm::vec3(-10.5f, 0.0f, -5.1f);
 float tumbleweedSpeed = 2.0f;     // unitati pe secunda
 float tumbleweedScale = 0.15f;     // ajustezi dupa model
-float tumbleweedAngle = 0.0f;     // optional rotatie
+float tumbleweedAngle = 0.0f;     // rotatie
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-
 
 // zone plate unde vrei sa pui obiecte
 std::vector<FlattenZone> flattenZones = {
@@ -152,28 +149,18 @@ std::vector<FlattenZone> flattenZones = {
 
 };
 
-
-
 static float clamp01(float v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 static float smooth01(float t) { return t * t * (3.0f - 2.0f * t); }
-
-// Poziția templului (folosește exact aceleași valori ca în renderArchitecture)
-glm::vec3 archPos(-45.0f, 0.0f, -110.0f);
-float archScale = 1.0f;
-float archSink = 0.85f;
-
-
-// float archYawDeg = 0.0f; // dacă vrei rotație la templu
 
 glm::mat4 computeArchitectureModelMatrix();
 glm::mat4 computeLeftTorchModelMatrix();
 glm::mat4 computeRightTorchModelMatrix();
 
-// === CAMEL ANIMATION ===
+// camila
 float camelAnimOffset = 0.0f;
-float camelSpeed = 0.8f;        // unități pe secundă
-float camelMaxDist = 4.0f;      // distanța maximă
-int camelDir = 1;               // 1 = înainte, -1 = înapoi
+float camelSpeed = 0.8f;        // unitati/sec
+float camelMaxDist = 4.0f;      // distanta max
+int camelDir = 1;               // 1 = inainte, -1 = inapoi
 
 enum RenderMode {
     RENDER_SOLID = 0,
@@ -184,7 +171,7 @@ enum RenderMode {
 RenderMode gRenderMode = RENDER_SOLID;
 bool gSmoothEnabled = true;
 
-// ===================== SHADOW MAP =====================
+// shadow map
 const unsigned int SHADOW_WIDTH = 2048;
 const unsigned int SHADOW_HEIGHT = 2048;
 
@@ -194,7 +181,7 @@ GLuint depthMapTexture;
 gps::Shader depthMapShader;
 
 float ruinsBaseY = -0.4f;  
-// ===================== MOUSE =====================
+// mouse
 void mouse_callback(GLFWwindow*, double xpos, double ypos)
 {
     if (firstMouse)
@@ -224,7 +211,6 @@ void mouse_callback(GLFWwindow*, double xpos, double ypos)
     cameraFront = glm::normalize(dir);
 }
 
-// ===================== INPUT =====================
 void processInput(GLFWwindow* window)
 {
     float speed = 5.0f * deltaTime;
@@ -276,30 +262,30 @@ void processInput(GLFWwindow* window)
     float twMove = tumbleweedSpeed * deltaTime;
 
 // SAGETI = TUMBLEWEED
-if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-    tumbleweedPos.z -= twMove;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        tumbleweedPos.z -= twMove;
 
-if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-    tumbleweedPos.z += twMove;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        tumbleweedPos.z += twMove;
 
-if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-    tumbleweedPos.x -= twMove;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        tumbleweedPos.x -= twMove;
 
-if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-    tumbleweedPos.x += twMove;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        tumbleweedPos.x += twMove;
 
 // rotatie cand se misca
-if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
-    glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
-    glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
-    glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-{
-    tumbleweedAngle += 180.0f * deltaTime;
-}
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        tumbleweedAngle += 180.0f * deltaTime;
+    }
 
 }
 
-// ===================== DUNE GENERATION =====================
+// generare dune
 float getHeightRaw(float x, float z)
 {
     float h1 = 4.0f * sin(0.02f * x) * cos(0.02f * z);
@@ -327,8 +313,6 @@ float getHeight(float x, float z)
 
     return h;
 }
-
-
 
 void generateDunes()
 {
@@ -387,7 +371,7 @@ void generateDunes()
 }
 
 
-// ===================== BUFFERS =====================
+// buffers
 void initDuneBuffers()
 {
     glGenVertexArrays(1, &duneVAO);
@@ -467,16 +451,14 @@ glm::mat4 computeRuinsModelMatrix(float yOffset = 0.0f)
     return M;
 }
 
-
 glm::mat4 computeLightSpaceTrMatrix()
 {
-    // centru aproximativ al scenei tale
+    // centru aproximativ al scenei 
     glm::vec3 sceneCenter(
         cameraPos.x,
         0.0f,
         cameraPos.z
     );
-
 
     glm::mat4 lightView = glm::lookAt(
         sceneCenter - lightDir * 60.0f,
@@ -500,7 +482,6 @@ GLuint loadTexture(const char* path)
     GLuint textureID;
     glGenTextures(1, &textureID);
 
-    // Debug: verifica dacă fisierul exista (mai ales la cai relative)
     std::ifstream f(path, std::ios::binary);
     if (!f.good())
     {
@@ -540,8 +521,6 @@ GLuint loadTexture(const char* path)
     return textureID;
 }
 
-
-
 GLuint loadShader(const char* vsPath, const char* fsPath)
 {
     auto loadFile = [](const char* path) {
@@ -575,21 +554,16 @@ GLuint loadShader(const char* vsPath, const char* fsPath)
     return prog;
 }
 
-
-
 static std::string trim(std::string s)
 {
     while (!s.empty() && (s.front() == ' ' || s.front() == '\t')) s.erase(s.begin());
     while (!s.empty() && (s.back() == ' ' || s.back() == '\t' || s.back() == '\r' || s.back() == '\n')) s.pop_back();
 
-    // dacă e între ghilimele
     if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\'')))
         s = s.substr(1, s.size() - 2);
 
     return s;
 }
-
-
 
 glm::mat4 computeRightTorchModelMatrix()
 {
@@ -601,8 +575,6 @@ glm::mat4 computeRightTorchModelMatrix()
     return M;
 }
 
-
-
 glm::mat4 computeLeftTorchModelMatrix()
 {
     float baseY = getHeight(archPos.x, archPos.z) - archSink;
@@ -612,8 +584,6 @@ glm::mat4 computeLeftTorchModelMatrix()
     M = glm::scale(M, glm::vec3(9.0f));
     return M;
 }
-
-
 
 glm::mat4 computeArchitectureModelMatrix()
 {
@@ -647,7 +617,7 @@ void renderTumbleweed()
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
 
-    // === SHADOW MAP ===
+    //shadow map
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
@@ -658,25 +628,24 @@ void renderTumbleweed()
         glm::value_ptr(computeLightSpaceTrMatrix())
     );
 
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL (simplu) ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // textura
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     glm::mat4 projection = glm::perspective(
         glm::radians(60.0f),
@@ -699,35 +668,33 @@ void renderTumbleweed()
     tumbleweedModel.Draw(myShader);
 }
 
-
 void renderTree2()
 {
     myShader.useShaderProgram();
     GLuint p = myShader.shaderProgram;
 
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.08f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 16.0f);
 
-    // === EMISSIVE (OFF) ===
+    // emmisive
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
     glUniform3f(glGetUniformLocation(p, "uEmissiveColor"), 1.0f, 0.5f, 0.2f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     glm::mat4 projection = glm::perspective(
         glm::radians(60.0f),
@@ -746,7 +713,7 @@ void renderTree2()
     glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(p, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    // === DRAW ===
+    // draw
     tree2Model.Draw(myShader);
 }
 
@@ -764,29 +731,27 @@ void renderDryPlant()
         glm::value_ptr(computeLightSpaceTrMatrix())
     );
 
-
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
 
-    // === EMISSIVE OFF ===
+    // emmisive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     glm::mat4 projection = glm::perspective(
         glm::radians(60.0f),
@@ -822,36 +787,30 @@ void renderSnake()
         glm::value_ptr(computeLightSpaceTrMatrix())
     );
 
-
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
 
-    // === EMISSIVE OFF ===
+    // emissive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f,
-        1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f), 
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
     float t = (float)glfwGetTime();
     float forwardBack = sin(t * 1.0f) * 0.4f;
     float idleRot = sin(t * 0.7f) * glm::radians(5.0f);
@@ -886,43 +845,30 @@ void renderCamel()
         glm::value_ptr(computeLightSpaceTrMatrix())
     );
 
-
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
 
-    // === EMISSIVE OFF ===
+    // emmisive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f,
-        1000.0f
-    );
-
-    /*float y = getHeight(camelPos.x, camelPos.z) - camelSink;
-
-    glm::mat4 model(1.0f);
-    model = glm::translate(model, glm::vec3(camelPos.x, y, camelPos.z));
-    model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(camelScale));*/
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
     float t = (float)glfwGetTime();
 
     float idleY = sin(t * 1.2f) * 0.03f;              // sus–jos
@@ -933,7 +879,7 @@ void renderCamel()
     glm::mat4 model(1.0f);
     model = glm::translate(model, glm::vec3(camelPos.x, y + idleY, camelPos.z));
 
-    // rotație FIXĂ la 180° (față de orientarea inițială)
+    // rotație fixa la 180
     model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
 
     // balans idle
@@ -941,7 +887,6 @@ void renderCamel()
 
     // scale
     model = glm::scale(model, glm::vec3(camelScale));
-
 
     glUniformMatrix4fv(glGetUniformLocation(p, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -964,36 +909,30 @@ void renderFirstPlant()
         glm::value_ptr(computeLightSpaceTrMatrix())
     );
 
-
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
 
-    // === EMISSIVE OFF ===
+    // emmisive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f,
-        1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
     float y = getHeight(firstPlantPos.x, firstPlantPos.z) - firstPlantSink;
 
@@ -1022,7 +961,6 @@ void renderSecondCactus()
         glm::value_ptr(computeLightSpaceTrMatrix())
     );
 
-
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
@@ -1040,15 +978,10 @@ void renderSecondCactus()
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f, 1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
-    float y = getHeight(cactus2Pos.x, cactus2Pos.z)
-        + cactus2BaseOffset
-        - cactus2Sink;
+    float y = getHeight(cactus2Pos.x, cactus2Pos.z) + cactus2BaseOffset - cactus2Sink;
 
     glm::mat4 model(1.0f);
     model = glm::translate(model, glm::vec3(cactus2Pos.x, y, cactus2Pos.z));
@@ -1070,42 +1003,33 @@ void renderCactus()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
 
-    glUniformMatrix4fv(
-        glGetUniformLocation(p, "lightSpaceTrMatrix"),
-        1, GL_FALSE,
-        glm::value_ptr(computeLightSpaceTrMatrix())
-    );
+    glUniformMatrix4fv( glGetUniformLocation(p, "lightSpaceTrMatrix"), 1, GL_FALSE,
+        glm::value_ptr(computeLightSpaceTrMatrix()));
 
-
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.05f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 8.0f);
 
-    // === EMISSIVE OFF ===
+    // emmisive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f,
-        1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
     float y = getHeight(cactusPos.x, cactusPos.z) - cactusSink;
 
@@ -1124,21 +1048,13 @@ void renderCactus()
 void renderLeftTorchOnTemple()
 {
     torchShader.useShaderProgram();
-
-
-
     GLuint p = torchShader.shaderProgram;
-    
-
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f, 1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
     glm::mat4 model = computeLeftTorchModelMatrix();
 
@@ -1152,7 +1068,6 @@ void renderLeftTorchOnTemple()
     glUniform3f(glGetUniformLocation(p, "emissiveColor"), 1.0f, 0.45f, 0.18f);
     glUniform1f(glGetUniformLocation(p, "emissiveStrength"), 0.8f);
 
-
     torchModel.Draw(torchShader);
 }
 
@@ -1160,20 +1075,13 @@ void renderLeftTorchOnTemple()
 void renderRightTorchOnTemple()
 {
     torchShader.useShaderProgram();
-
     GLuint p = torchShader.shaderProgram;
-    
-
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f, 1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
     glm::mat4 model = computeRightTorchModelMatrix();
 
@@ -1186,8 +1094,6 @@ void renderRightTorchOnTemple()
     glUniform3f(glGetUniformLocation(p, "ambientColor"), 0.08f, 0.06f, 0.04f);
     glUniform3f(glGetUniformLocation(p, "emissiveColor"), 1.0f, 0.45f, 0.18f);
     glUniform1f(glGetUniformLocation(p, "emissiveStrength"), 0.8f);
-
-
 
     torchModel.Draw(torchShader);
 }
@@ -1204,12 +1110,8 @@ void renderArchitecture()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
 
-    glUniformMatrix4fv(
-        glGetUniformLocation(p, "lightSpaceTrMatrix"),
-        1, GL_FALSE,
-        glm::value_ptr(computeLightSpaceTrMatrix())
-    );
-
+    glUniformMatrix4fv(glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
 
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
@@ -1221,7 +1123,7 @@ void renderArchitecture()
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.08f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 16.0f);
 
-    // emissive (default OFF)
+    // emissive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
     glUniform3f(glGetUniformLocation(p, "uEmissiveColor"), 1.0f, 0.5f, 0.2f);
 
@@ -1231,7 +1133,6 @@ void renderArchitecture()
 
     // texture unit
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
-
 
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     glm::mat4 projection = glm::perspective(glm::radians(60.0f),
@@ -1256,11 +1157,8 @@ void renderRuins()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
 
-    glUniformMatrix4fv(
-        glGetUniformLocation(p, "lightSpaceTrMatrix"),
-        1, GL_FALSE,
-        glm::value_ptr(computeLightSpaceTrMatrix())
-    );
+    glUniformMatrix4fv( glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
 
     // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
@@ -1277,7 +1175,6 @@ void renderRuins()
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // matrices
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     glm::mat4 projection = glm::perspective(
         glm::radians(60.0f),
@@ -1285,7 +1182,7 @@ void renderRuins()
         0.1f, 1000.0f
     );
 
-    glm::mat4 model = computeRuinsModelMatrix(0.0f); // ✅ DOAR ASTA
+    glm::mat4 model = computeRuinsModelMatrix(0.0f); 
 
     glUniformMatrix4fv(glGetUniformLocation(p, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -1293,12 +1190,6 @@ void renderRuins()
 
     ruinsModel.Draw(myShader);
 }
-
-
-
-
-
-// ===================== SHADER =====================
 
 void renderTree()
 {
@@ -1308,43 +1199,34 @@ void renderTree()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
 
-    glUniformMatrix4fv(
-        glGetUniformLocation(p, "lightSpaceTrMatrix"),
-        1, GL_FALSE,
-        glm::value_ptr(computeLightSpaceTrMatrix())
-    );
+    glUniformMatrix4fv(glGetUniformLocation(p, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
 
-
-    // === LIGHTING ===
+    // lighting
     glUniform3fv(glGetUniformLocation(p, "lightDir"), 1, glm::value_ptr(lightDir));
     glUniform3fv(glGetUniformLocation(p, "lightColor"), 1, glm::value_ptr(lightColor));
     glUniform3fv(glGetUniformLocation(p, "ambientColor"), 1, glm::value_ptr(ambientColor));
     glUniform3fv(glGetUniformLocation(p, "viewPos"), 1, glm::value_ptr(cameraPos));
 
-    // === MATERIAL ===
+    // material
     glUniform3f(glGetUniformLocation(p, "materialTint"), 1.0f, 1.0f, 1.0f);
     glUniform1f(glGetUniformLocation(p, "specStrength"), 0.08f);
     glUniform1f(glGetUniformLocation(p, "shininess"), 16.0f);
 
-    // === EMISSIVE (OFF) ===
+    // emissive off
     glUniform1f(glGetUniformLocation(p, "uEmissive"), 0.0f);
     glUniform3f(glGetUniformLocation(p, "uEmissiveColor"), 1.0f, 0.5f, 0.2f);
 
-    // === FOG ===
+    // fog
     glUniform3f(glGetUniformLocation(p, "fogColor"), 0.75f, 0.70f, 0.60f);
     glUniform1f(glGetUniformLocation(p, "fogDensity"), 0.006f);
 
-    // === TEXTURE ===
+    // texture
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
-    // === MATRICES ===
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f,
-        1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
     float y = getHeight(treePos.x, treePos.z) - treeSink;
 
@@ -1356,11 +1238,8 @@ void renderTree()
     glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(p, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    // === DRAW ===
     treeModel.Draw(myShader);
 }
-
-
 
 void renderDunes()
 {
@@ -1369,23 +1248,16 @@ void renderDunes()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(duneShader, "shadowMap"), 1);
 
-    glUniformMatrix4fv(
-        glGetUniformLocation(duneShader, "lightSpaceTrMatrix"),
-        1, GL_FALSE,
-        glm::value_ptr(computeLightSpaceTrMatrix())
-    );
+    glUniformMatrix4fv(glGetUniformLocation(duneShader, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
 
     glUniform3f(glGetUniformLocation(duneShader, "fogColor"), 0.75f, 0.70f, 0.60f);
-    glUniform1f(glGetUniformLocation(duneShader, "fogDensity"), 0.006f); // începe cu 0.004..0.008
+    glUniform1f(glGetUniformLocation(duneShader, "fogDensity"), 0.006f); 
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(60.0f),
-        (float)SCR_WIDTH / SCR_HEIGHT,
-        0.1f,
-        1000.0f
-    );
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+        (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
 
     glUniformMatrix4fv(glGetUniformLocation(duneShader, "model"),
         1, GL_FALSE, glm::value_ptr(model));
@@ -1403,25 +1275,20 @@ void renderDunes()
     glUniform3fv(glGetUniformLocation(duneShader, "ambientColor"), 1, glm::value_ptr(ambientColor));
     //glUniform1f(glGetUniformLocation(duneShader, "fogDensity"), 0.0f);
 
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sandTexture);
     glUniform1i(glGetUniformLocation(duneShader, "sandTexture"), 0);
 
     glBindVertexArray(duneVAO);
-    glDrawElements(GL_TRIANGLES,
-        (GLsizei)duneIndices.size(),
-        GL_UNSIGNED_INT,
-        0);
+    glDrawElements(GL_TRIANGLES, (GLsizei)duneIndices.size(), GL_UNSIGNED_INT, 0);
 }
 
 static float clampf(float v, float a, float b) { return v < a ? a : (v > b ? b : v); }
 
 static float flicker(float t, float phase)
 {
-    float f = 0.85f
-        + 0.15f * sinf(t * 7.0f + phase)
-        + 0.08f * sinf(t * 13.0f + phase * 2.3f);
+    float f = 0.85f + 0.15f * sinf(t * 7.0f + phase) + 0.08f * sinf(t * 13.0f + phase * 2.3f);
+
     return clampf(f, 0.65f, 1.20f);
 }
 
@@ -1430,7 +1297,7 @@ void updateTorchLights(float timeSec)
     glm::mat4 ML = computeLeftTorchModelMatrix();
     glm::mat4 MR = computeRightTorchModelMatrix();
 
-    // poziția flăcării în modelul torței (local space)
+    // pozitia flacarii
     glm::vec3 flameLocalOffset(0.0f, 0.36f, 0.14f);
 
     gTorchPos[0] = glm::vec3(ML * glm::vec4(flameLocalOffset, 1.0f));
@@ -1441,13 +1308,10 @@ void updateTorchLights(float timeSec)
     gTorchIntensity[1] = base * flicker(timeSec, 1.7f);
 }
 
-
-
-
 void uploadTorchUniforms(GLuint program)
 {
     GLint locCount = glGetUniformLocation(program, "uTorchCount");
-    if (locCount < 0) return; // shaderul nu are torțe (încă)
+    if (locCount < 0) return; // shaderul nu are torte
 
     glUniform1i(locCount, TORCH_COUNT);
 
@@ -1467,179 +1331,112 @@ void renderDepthPass(gps::Shader& shader)
     shader.useShaderProgram();
 
     glm::mat4 lightSpace = computeLightSpaceTrMatrix();
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "lightSpaceTrMatrix"),
-        1, GL_FALSE, glm::value_ptr(lightSpace)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(lightSpace));
 
-    glm::mat4 model;  // ✅ DECLARAT O SINGURĂ DATĂ
+    glm::mat4 model; 
 
-    // ================= DUNE =================
+    // dune
     model = glm::mat4(1.0f);
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     glBindVertexArray(duneVAO);
     glDrawElements(GL_TRIANGLES, (GLsizei)duneIndices.size(), GL_UNSIGNED_INT, 0);
 
-    // ================= TREE =================
-    model = glm::translate(glm::mat4(1.0f),
-        glm::vec3(treePos.x, getHeight(treePos.x, treePos.z), treePos.z));
+    // tree
+    model = glm::translate(glm::mat4(1.0f),glm::vec3(treePos.x, getHeight(treePos.x, treePos.z), treePos.z));
     model = glm::scale(model, glm::vec3(treeScale));
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     treeModel.Draw(shader);
 
-    // ================= RUINS =================
-    model = computeRuinsModelMatrix(0.02f);  // ✅ DOAR ASIGNARE
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    // ruine
+    model = computeRuinsModelMatrix(0.02f); 
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     ruinsModel.Draw(shader);
 
-    // ================= SNAKE =================
+    // snake
     float t = (float)glfwGetTime();
     float forwardBack = sin(t * 1.0f) * 0.4f;
     float idleRot = sin(t * 0.7f) * glm::radians(5.0f);
-
     float y = getHeight(snakePos.x, snakePos.z + forwardBack) - snakeSink;
-
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(
-        snakePos.x + forwardBack,
-        y,
-        snakePos.z
-    ));
+    model = glm::translate(model, glm::vec3(snakePos.x + forwardBack, y, snakePos.z));
     model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
     model = glm::rotate(model, idleRot, glm::vec3(0, 0, 1));
     model = glm::scale(model, glm::vec3(snakeScale));
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     snakeModel.Draw(shader);
 
-    // ================= CACTUS 1 =================
+    // cactus 1
     model = glm::mat4(1.0f);
-    model = glm::translate(model,
-        glm::vec3(
-            cactusPos.x,
-            getHeight(cactusPos.x, cactusPos.z) - cactusSink + 0.02f,
-            cactusPos.z
-        )
-    );
+    model = glm::translate(model, glm::vec3(cactusPos.x, 
+        getHeight(cactusPos.x, cactusPos.z) - cactusSink + 0.02f, cactusPos.z));
     model = glm::scale(model, glm::vec3(cactusScale));
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     cactusModel.Draw(shader);
 
-    // ================= CACTUS 2 =================
+    // cactus 2
     model = glm::mat4(1.0f);
-    model = glm::translate(model,
-        glm::vec3(
-            cactus2Pos.x,
-            getHeight(cactus2Pos.x, cactus2Pos.z) - cactus2Sink + 0.02f,
-            cactus2Pos.z
-        )
-    );
+    model = glm::translate(model, glm::vec3(cactus2Pos.x,
+            getHeight(cactus2Pos.x, cactus2Pos.z) - cactus2Sink + 0.02f, cactus2Pos.z));
     model = glm::scale(model, glm::vec3(cactus2Scale));
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     cactus2Model.Draw(shader);
 
-    // ================= CAMEL =================
+    // camila
     model = glm::mat4(1.0f);
-    model = glm::translate(model,
-        glm::vec3(
-            camelPos.x,
-            getHeight(camelPos.x, camelPos.z) - camelSink + 0.02f,
-            camelPos.z
-        )
-    );
+    model = glm::translate(model, glm::vec3(camelPos.x,
+            getHeight(camelPos.x, camelPos.z) - camelSink + 0.02f, camelPos.z));
     model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
     model = glm::scale(model, glm::vec3(camelScale));
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     camelModel.Draw(shader);
 
-
-    // ================= ARCHITECTURE (TEMPLE) =================
-    model = computeArchitectureModelMatrix();  // NU mai adaugi translate/scale manual
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    //architecture
+    model = computeArchitectureModelMatrix(); 
+    glUniformMatrix4fv( glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     architectureModel.Draw(shader);
 
-    // ================= TREE 2 =================
+    // tree2
     model = glm::mat4(1.0f);
-    model = glm::translate(model,
-        glm::vec3(
-            tree2Pos.x,
-            getHeight(tree2Pos.x, tree2Pos.z) - tree2Sink + 0.02f,
-            tree2Pos.z
-        )
-    );
+    model = glm::translate(model,glm::vec3(tree2Pos.x,
+            getHeight(tree2Pos.x, tree2Pos.z) - tree2Sink + 0.02f, tree2Pos.z));
     model = glm::scale(model, glm::vec3(tree2Scale));
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv( glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     tree2Model.Draw(shader);
 
-    // ================= TUMBLEWEED =================
+    // tumbleweed
     y = getHeight(tumbleweedPos.x, tumbleweedPos.z);
-
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(tumbleweedPos.x, y, tumbleweedPos.z));
     model = glm::rotate(model, glm::radians(tumbleweedAngle), glm::vec3(0, 1, 0));
     model = glm::scale(model, glm::vec3(tumbleweedScale));
-
-    glUniformMatrix4fv(
-        glGetUniformLocation(shader.shaderProgram, "model"),
-        1, GL_FALSE, glm::value_ptr(model)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
+        1, GL_FALSE, glm::value_ptr(model));
     tumbleweedModel.Draw(shader);
-
-
 }
 
-
-
-
-// ===================== RENDER =====================
+//render scene
 void renderScene(GLFWwindow* window)
 {
     float now = (float)glfwGetTime();
     updateTorchLights(now);
     glDisable(GL_CULL_FACE);
 
-
-    // ===================== 1) DEPTH PASS =====================
+    // depth pass
     depthMapShader.useShaderProgram();
 
     glm::mat4 lightSpaceMatrix = computeLightSpaceTrMatrix();
-    glUniformMatrix4fv(
-        glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
-        1, GL_FALSE, glm::value_ptr(lightSpaceMatrix)
-    );
+    glUniformMatrix4fv(glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
+        1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
@@ -1653,7 +1450,6 @@ void renderScene(GLFWwindow* window)
     myShader.useShaderProgram();
     uploadTorchUniforms(myShader.shaderProgram);
 
-
     if (duneShader)
     {
         glUseProgram(duneShader);
@@ -1662,13 +1458,13 @@ void renderScene(GLFWwindow* window)
 
     processInput(window);
     float groundY = getHeight(cameraPos.x, cameraPos.z);
-    cameraPos.y = groundY + 1.7f; // înălțimea ochilor
+    cameraPos.y = groundY + 1.7f; // inaltimea ochilor
 
     // cer
     glClearColor(0.75f, 0.70f, 0.60f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // === RENDER MODE ===
+    // render mode
     switch (gRenderMode)
     {
     case RENDER_SOLID:
@@ -1684,7 +1480,7 @@ void renderScene(GLFWwindow* window)
         break;
     }
 
-    // === SMOOTH / FLAT ===
+    // smooth/flat
     if (gSmoothEnabled)
     {
         glEnable(GL_LINE_SMOOTH);
@@ -1696,8 +1492,6 @@ void renderScene(GLFWwindow* window)
         glDisable(GL_POINT_SMOOTH);
     }
 
-
-    // === DUNE ===
     renderDunes();
     renderTree();
     renderRuins();
@@ -1715,7 +1509,6 @@ void renderScene(GLFWwindow* window)
     renderTumbleweed();
 }
 
-// ===================== MAIN =====================
 int main()
 {
     glfwInit();
@@ -1726,46 +1519,18 @@ int main()
     glEnable(GL_DEPTH_TEST);
     initShadowMap();
 
-    /*depthMapShader.loadShader(
-        "shaders/shaderDepth.vert",
-        "shaders/shaderDepth.frag"
-    );*/
-
-
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    myShader.loadShader(
-        "shaders/shaderModel.vert",
-        "shaders/shaderModel.frag"
-    );
-    torchShader.loadShader(
-        "shaders/shaderTorch.vert",
-        "shaders/shaderTorch.frag"
-    );
-    depthMapShader.loadShader(
-        "shaders/shaderDepth.vert",
-        "shaders/shaderDepth.frag"
-    );
-
-
-
-    // IMPORTANT: baseDir trebuie să fie folderul în care e .mtl (și față de care sunt căile din map_Kd)
+    myShader.loadShader("shaders/shaderModel.vert", "shaders/shaderModel.frag");
+    torchShader.loadShader("shaders/shaderTorch.vert", "shaders/shaderTorch.frag");
+    depthMapShader.loadShader("shaders/shaderDepth.vert","shaders/shaderDepth.frag");
     treeModel.LoadModel("models/sahara_tree/sahara_tree.obj", "models/sahara_tree/");
     ruinsModel.LoadModel("models/desert_ruins/desert_ruins.obj", "models/desert_ruins/");
-    architectureModel.LoadModel(
-        "models/desert_architecture_building/desert_architecture.obj",
-        "models/desert_architecture_building/"
-    );
+    architectureModel.LoadModel("models/desert_architecture_building/desert_architecture.obj","models/desert_architecture_building/");
     torchModel.LoadModel("models/torch/torch.obj", "models/torch/");
-    cactusModel.LoadModel(
-        "models/plants/firstcactus.obj",
-        "models/plants/"
-    );
-    cactus2Model.LoadModel(
-        "models/plants/secondcactus.obj",
-        "models/plants/"
-    );
+    cactusModel.LoadModel("models/plants/firstcactus.obj", "models/plants/");
+    cactus2Model.LoadModel("models/plants/secondcactus.obj", "models/plants/");
     firstPlantModel.LoadModel("models/plants/plant.obj", "models/plants/");
     camelModel.LoadModel("models/camel/camel.obj", "models/camel/");
     snakeModel.LoadModel("models/snake/snake.obj", "models/snake/");
@@ -1773,8 +1538,7 @@ int main()
     tree2Model.LoadModel("models/sahara_tree/saharatree2.obj", "models/sahara_tree/");
     tumbleweedModel.LoadModel("models/tumbleweed/tumbleweed.obj");
 
-
-    // dacă frunzele au alpha (PNG), activează blending (opțional dar util)
+    // dacă frunzele au alpha (PNG), activează blending
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1782,28 +1546,24 @@ int main()
 
     initDuneBuffers();
     sandTexture = loadTexture("textures/sand.jpg");
-    duneShader = loadShader(
-        "shaders/shaderDune.vert",
-        "shaders/shaderDune.frag"
-    );
+    duneShader = loadShader("shaders/shaderDune.vert","shaders/shaderDune.frag");
     while (!glfwWindowShouldClose(window))
     {
-        // === deltaTime (O SINGURA DATA) ===
+        // deltatime
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // === input / movement ===
+        // input move
         processInput(window);
 
-        // === render ===
+        // render
         renderScene(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
- 
     glfwTerminate();
     return 0;
 }
