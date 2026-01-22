@@ -48,6 +48,12 @@ glm::vec3 cameraPos(0.0f, 1.5f, 5.0f);
 glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
+glm::vec3 savedCameraPos;
+glm::vec3 savedCameraFront;
+float savedYaw;
+float savedPitch;
+
+
 float yaw = -90.0f;
 float pitch = 0.0f;
 float lastX = SCR_WIDTH / 2.0f;
@@ -89,16 +95,16 @@ float ruinsRadius = 10.0f;   // raza platformei
 
 glm::vec3 ruinsPos(14.0f, 0.0f, -5.5f);
 float ruinsScale = 1.0f;
-float ruinsSink = 0.65f;   
+float ruinsSink = 0.65f;
 float ruinsYawDeg = 0.0f;  // rotatie
 
 glm::vec3 treePos(4.5f, 0.0f, -5.0f);
 float treeScale = 4.5f;
-float treeSink = 0.0f;  
+float treeSink = 0.0f;
 
 glm::vec3 cactusPos(8.0f, 0.0f, -10.0f);
 float cactusScale = 3.0f;
-float cactusSink = 0.0f;   
+float cactusSink = 0.0f;
 
 glm::vec3 cactus2Pos(15.0f, 0.0f, -1.0f);
 float cactus2Scale = 3.0f;
@@ -152,6 +158,11 @@ std::vector<FlattenZone> flattenZones = {
 static float clamp01(float v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 static float smooth01(float t) { return t * t * (3.0f - 2.0f * t); }
 
+// ==== FORWARD DECLARATIONS ====
+float getHeight(float x, float z);
+float getHeightRaw(float x, float z);
+
+
 glm::mat4 computeArchitectureModelMatrix();
 glm::mat4 computeLeftTorchModelMatrix();
 glm::mat4 computeRightTorchModelMatrix();
@@ -180,7 +191,19 @@ GLuint depthMapTexture;
 
 gps::Shader depthMapShader;
 
-float ruinsBaseY = -0.4f;  
+float ruinsBaseY = -0.4f;
+
+bool gPresentationMode = false;
+float gPresentationTime = 0.0f;
+
+// centru general al scenei
+glm::vec3 sceneCenter = glm::vec3(10.0f, 0.0f, -10.0f);
+
+// puncte de interes (POI)
+glm::vec3 poiRuins;
+glm::vec3 poiCamel;
+glm::vec3 poiTemple;
+
 // mouse
 void mouse_callback(GLFWwindow*, double xpos, double ypos)
 {
@@ -213,6 +236,8 @@ void mouse_callback(GLFWwindow*, double xpos, double ypos)
 
 void processInput(GLFWwindow* window)
 {
+    static bool keyPPressed = false;
+
     float speed = 5.0f * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -261,7 +286,7 @@ void processInput(GLFWwindow* window)
         key4Pressed = false;
     float twMove = tumbleweedSpeed * deltaTime;
 
-// SAGETI = TUMBLEWEED
+    // SAGETI = TUMBLEWEED
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         tumbleweedPos.z -= twMove;
 
@@ -274,7 +299,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         tumbleweedPos.x += twMove;
 
-// rotatie cand se misca
+    // rotatie cand se misca
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
@@ -283,7 +308,89 @@ void processInput(GLFWwindow* window)
         tumbleweedAngle += 180.0f * deltaTime;
     }
 
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS && !keyPPressed)
+    {
+        keyPPressed = true;
+
+        if (!gPresentationMode)
+        {
+            // intrare presentation
+            savedCameraPos = cameraPos;
+            savedCameraFront = cameraFront;
+            savedYaw = yaw;
+            savedPitch = pitch;
+
+            gPresentationMode = true;
+            gPresentationTime = 0.0f;
+        }
+        else
+        {
+            // iesire presentation
+            gPresentationMode = false;
+
+            cameraPos = savedCameraPos;
+            cameraFront = savedCameraFront;
+            yaw = savedYaw;
+            pitch = savedPitch;
+
+            firstMouse = true; // reset mouse
+        }
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE)
+        keyPPressed = false;
+
+    //daca suntem in presentation mode nu mai citim restul
+    if (gPresentationMode)
+        return;
+
 }
+
+void updatePresentationCamera(float dt)
+{
+    gPresentationTime += dt;
+
+    float radius = 18.0f;
+    float speed = 0.25f;
+
+    float angle = gPresentationTime * speed;
+
+    cameraPos.x = sceneCenter.x + cosf(angle) * radius;
+    cameraPos.z = sceneCenter.z + sinf(angle) * radius;
+    cameraPos.y = 4.0f + sinf(angle * 0.5f);
+
+    poiRuins = glm::vec3(
+        ruinsPos.x,
+        getHeight(ruinsPos.x, ruinsPos.z),
+        ruinsPos.z
+    );
+
+    /*poiCamel = glm::vec3(
+        camelPos.x,
+        getHeight(camelPos.x, camelPos.z),
+        camelPos.z + camelAnimOffset
+    );*/
+
+    poiTemple = glm::vec3(
+        archPos.x,
+        getHeight(archPos.x, archPos.z),
+        archPos.z
+    );
+
+    float phase = fmodf(gPresentationTime, 24.0f);
+
+    glm::vec3 target;
+    if (phase < 12.0f)
+        target = poiRuins;
+    /*else if (phase < 16.0f)
+        target = poiCamel;*/
+    else
+        target = poiTemple;
+
+    cameraFront = glm::normalize(target - cameraPos);
+}
+
+
 
 // generare dune
 float getHeightRaw(float x, float z)
@@ -302,9 +409,9 @@ float getHeight(float x, float z)
     {
         float dx = x - zone.cx;
         float dz = z - zone.cz;
-        float d = std::sqrt(dx * dx + dz * dz);
+        float d = std::sqrt(dx * dx + dz * dz);//distanta fata de centru
 
-        float w = clamp01(1.0f - d / zone.radius);
+        float w = clamp01(1.0f - d / zone.radius); //tranzatii bruste
         w = smooth01(w) * zone.strength;        // 0..1
 
         float h0 = getHeightRaw(zone.cx, zone.cz);  // “inaltimea platformei”
@@ -329,6 +436,7 @@ void generateDunes()
             float height = getHeight(xpos, zpos);
 
             // derivari numerice
+            //calculul normelor
             float eps = GRID_SCALE;
             float hL = getHeight(xpos - eps, zpos);
             float hR = getHeight(xpos + eps, zpos);
@@ -809,7 +917,7 @@ void renderSnake()
     glUniform1i(glGetUniformLocation(p, "diffuseTexture"), 0);
 
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(glm::radians(60.0f), 
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
         (float)SCR_WIDTH / SCR_HEIGHT, 0.1f, 1000.0f);
     float t = (float)glfwGetTime();
     float forwardBack = sin(t * 1.0f) * 0.4f;
@@ -1003,7 +1111,7 @@ void renderCactus()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
 
-    glUniformMatrix4fv( glGetUniformLocation(p, "lightSpaceTrMatrix"), 1, GL_FALSE,
+    glUniformMatrix4fv(glGetUniformLocation(p, "lightSpaceTrMatrix"), 1, GL_FALSE,
         glm::value_ptr(computeLightSpaceTrMatrix()));
 
     // lighting
@@ -1157,7 +1265,7 @@ void renderRuins()
     glBindTexture(GL_TEXTURE_2D, depthMapTexture);
     glUniform1i(glGetUniformLocation(p, "shadowMap"), 1);
 
-    glUniformMatrix4fv( glGetUniformLocation(p, "lightSpaceTrMatrix"),
+    glUniformMatrix4fv(glGetUniformLocation(p, "lightSpaceTrMatrix"),
         1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
 
     // lighting
@@ -1182,7 +1290,7 @@ void renderRuins()
         0.1f, 1000.0f
     );
 
-    glm::mat4 model = computeRuinsModelMatrix(0.0f); 
+    glm::mat4 model = computeRuinsModelMatrix(0.0f);
 
     glUniformMatrix4fv(glGetUniformLocation(p, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(p, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -1252,7 +1360,7 @@ void renderDunes()
         1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
 
     glUniform3f(glGetUniformLocation(duneShader, "fogColor"), 0.75f, 0.70f, 0.60f);
-    glUniform1f(glGetUniformLocation(duneShader, "fogDensity"), 0.006f); 
+    glUniform1f(glGetUniformLocation(duneShader, "fogDensity"), 0.006f);
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
@@ -1304,8 +1412,8 @@ void updateTorchLights(float timeSec)
     gTorchPos[1] = glm::vec3(MR * glm::vec4(flameLocalOffset, 1.0f));
 
     float base = 3.2f;
-    gTorchIntensity[0] = base * flicker(timeSec, 0.0f);
-    gTorchIntensity[1] = base * flicker(timeSec, 1.7f);
+    gTorchIntensity[0] = base;
+    gTorchIntensity[1] = base;
 }
 
 void uploadTorchUniforms(GLuint program)
@@ -1334,7 +1442,7 @@ void renderDepthPass(gps::Shader& shader)
     glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "lightSpaceTrMatrix"),
         1, GL_FALSE, glm::value_ptr(lightSpace));
 
-    glm::mat4 model; 
+    glm::mat4 model;
 
     // dune
     model = glm::mat4(1.0f);
@@ -1344,14 +1452,14 @@ void renderDepthPass(gps::Shader& shader)
     glDrawElements(GL_TRIANGLES, (GLsizei)duneIndices.size(), GL_UNSIGNED_INT, 0);
 
     // tree
-    model = glm::translate(glm::mat4(1.0f),glm::vec3(treePos.x, getHeight(treePos.x, treePos.z), treePos.z));
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(treePos.x, getHeight(treePos.x, treePos.z), treePos.z));
     model = glm::scale(model, glm::vec3(treeScale));
     glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
         1, GL_FALSE, glm::value_ptr(model));
     treeModel.Draw(shader);
 
     // ruine
-    model = computeRuinsModelMatrix(0.02f); 
+    model = computeRuinsModelMatrix(0.02f);
     glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
         1, GL_FALSE, glm::value_ptr(model));
     ruinsModel.Draw(shader);
@@ -1372,7 +1480,7 @@ void renderDepthPass(gps::Shader& shader)
 
     // cactus 1
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(cactusPos.x, 
+    model = glm::translate(model, glm::vec3(cactusPos.x,
         getHeight(cactusPos.x, cactusPos.z) - cactusSink + 0.02f, cactusPos.z));
     model = glm::scale(model, glm::vec3(cactusScale));
     glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
@@ -1382,7 +1490,7 @@ void renderDepthPass(gps::Shader& shader)
     // cactus 2
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(cactus2Pos.x,
-            getHeight(cactus2Pos.x, cactus2Pos.z) - cactus2Sink + 0.02f, cactus2Pos.z));
+        getHeight(cactus2Pos.x, cactus2Pos.z) - cactus2Sink + 0.02f, cactus2Pos.z));
     model = glm::scale(model, glm::vec3(cactus2Scale));
     glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
         1, GL_FALSE, glm::value_ptr(model));
@@ -1391,7 +1499,7 @@ void renderDepthPass(gps::Shader& shader)
     // camila
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(camelPos.x,
-            getHeight(camelPos.x, camelPos.z) - camelSink + 0.02f, camelPos.z));
+        getHeight(camelPos.x, camelPos.z) - camelSink + 0.02f, camelPos.z));
     model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
     model = glm::scale(model, glm::vec3(camelScale));
     glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
@@ -1399,17 +1507,17 @@ void renderDepthPass(gps::Shader& shader)
     camelModel.Draw(shader);
 
     //architecture
-    model = computeArchitectureModelMatrix(); 
-    glUniformMatrix4fv( glGetUniformLocation(shader.shaderProgram, "model"),
+    model = computeArchitectureModelMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
         1, GL_FALSE, glm::value_ptr(model));
     architectureModel.Draw(shader);
 
     // tree2
     model = glm::mat4(1.0f);
-    model = glm::translate(model,glm::vec3(tree2Pos.x,
-            getHeight(tree2Pos.x, tree2Pos.z) - tree2Sink + 0.02f, tree2Pos.z));
+    model = glm::translate(model, glm::vec3(tree2Pos.x,
+        getHeight(tree2Pos.x, tree2Pos.z) - tree2Sink + 0.02f, tree2Pos.z));
     model = glm::scale(model, glm::vec3(tree2Scale));
-    glUniformMatrix4fv( glGetUniformLocation(shader.shaderProgram, "model"),
+    glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"),
         1, GL_FALSE, glm::value_ptr(model));
     tree2Model.Draw(shader);
 
@@ -1455,7 +1563,8 @@ void renderScene(GLFWwindow* window)
         glUseProgram(duneShader);
         uploadTorchUniforms(duneShader);
     }
-
+    if (gPresentationMode)
+        updatePresentationCamera(deltaTime);
     processInput(window);
     float groundY = getHeight(cameraPos.x, cameraPos.z);
     cameraPos.y = groundY + 1.7f; // inaltimea ochilor
@@ -1463,6 +1572,7 @@ void renderScene(GLFWwindow* window)
     // cer
     glClearColor(0.75f, 0.70f, 0.60f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   
 
     // render mode
     switch (gRenderMode)
@@ -1524,10 +1634,10 @@ int main()
 
     myShader.loadShader("shaders/shaderModel.vert", "shaders/shaderModel.frag");
     torchShader.loadShader("shaders/shaderTorch.vert", "shaders/shaderTorch.frag");
-    depthMapShader.loadShader("shaders/shaderDepth.vert","shaders/shaderDepth.frag");
+    depthMapShader.loadShader("shaders/shaderDepth.vert", "shaders/shaderDepth.frag");
     treeModel.LoadModel("models/sahara_tree/sahara_tree.obj", "models/sahara_tree/");
     ruinsModel.LoadModel("models/desert_ruins/desert_ruins.obj", "models/desert_ruins/");
-    architectureModel.LoadModel("models/desert_architecture_building/desert_architecture.obj","models/desert_architecture_building/");
+    architectureModel.LoadModel("models/desert_architecture_building/desert_architecture.obj", "models/desert_architecture_building/");
     torchModel.LoadModel("models/torch/torch.obj", "models/torch/");
     cactusModel.LoadModel("models/plants/firstcactus.obj", "models/plants/");
     cactus2Model.LoadModel("models/plants/secondcactus.obj", "models/plants/");
@@ -1546,7 +1656,7 @@ int main()
 
     initDuneBuffers();
     sandTexture = loadTexture("textures/sand.jpg");
-    duneShader = loadShader("shaders/shaderDune.vert","shaders/shaderDune.frag");
+    duneShader = loadShader("shaders/shaderDune.vert", "shaders/shaderDune.frag");
     while (!glfwWindowShouldClose(window))
     {
         // deltatime
@@ -1555,7 +1665,7 @@ int main()
         lastFrame = currentFrame;
 
         // input move
-        processInput(window);
+        //processInput(window);
 
         // render
         renderScene(window);
